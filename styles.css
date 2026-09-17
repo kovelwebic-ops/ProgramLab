@@ -169,6 +169,17 @@ img.is-missing { visibility: hidden; }
 .day-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
 .day-head .inp { font-weight: 600; width: 280px; }
 .day-body { padding: 4px 8px 12px; }
+.stats-line { color: var(--muted); white-space: nowrap; }
+.stats-line b { color: var(--fg); }
+
+.pw-item { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; margin: 8px 0; }
+.pw-item.is-excluded { background: var(--warn-weak); }
+.pw-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pw-head .inp { width: auto; }
+.pw-head select.inp[data-i="group"] { width: 130px; }
+.pw-blocks { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; margin: 8px 0; }
+.pw-block { display: flex; align-items: center; gap: 6px; }
+.pw-item > .inp.wide { margin-top: 2px; }
 
 /* Прогрес */
 .scroll-box { max-height: 280px; overflow-y: auto; }

@@ -88,33 +88,53 @@
 
   /* ── Пресети програм ───────────────────────────────────────── */
 
+  // Рядок пресету: { ex, sets, reps } для культуризму; + { load, pct, rest } для пауерліфтингу
+  var bb = function (ex, sets, reps) { return { ex: ex, sets: sets, reps: reps }; };
+  var pw = function (ex, load, pct, reps, sets, rest) {
+    return { ex: ex, load: load, pct: pct, reps: reps, sets: sets, rest: rest };
+  };
+
   PL.PRESETS = [
     {
       id: 'fullbody',
+      kind: 'bodybuilding',
       name: 'Фулбаді A / Б',
       note: 'Два чергованих тренування на все тіло, 3 рази на тиждень. Для початківців.',
       days: [
-        { name: 'Тренування A', items: [['back-squat', 3, '6-8'], ['bench-press', 3, '6-8'], ['barbell-row', 3, '8-10'], ['lateral-raise', 3, '12-15'], ['plank', 3, '30-45 с']] },
-        { name: 'Тренування Б', items: [['rdl', 3, '8-10'], ['ohp', 3, '6-8'], ['lat-pulldown', 3, '10-12'], ['db-lunge', 3, '10-12'], ['crunch', 3, '12-15']] }
+        { name: 'Тренування A', items: [bb('back-squat', 3, '6-8'), bb('bench-press', 3, '6-8'), bb('barbell-row', 3, '8-10'), bb('lateral-raise', 3, '12-15'), bb('plank', 3, '30-45 с')] },
+        { name: 'Тренування Б', items: [bb('rdl', 3, '8-10'), bb('ohp', 3, '6-8'), bb('lat-pulldown', 3, '10-12'), bb('db-lunge', 3, '10-12'), bb('crunch', 3, '12-15')] }
       ]
     },
     {
       id: 'upper-lower',
+      kind: 'bodybuilding',
       name: 'Верх / Низ',
       note: 'Два тренування, 4 рази на тиждень. Для середнього рівня.',
       days: [
-        { name: 'Верх', items: [['bench-press', 4, '6-8'], ['barbell-row', 4, '6-8'], ['db-shoulder-press', 3, '8-10'], ['lat-pulldown', 3, '10-12'], ['barbell-curl', 3, '10-12'], ['triceps-pushdown', 3, '10-12']] },
-        { name: 'Низ', items: [['back-squat', 4, '6-8'], ['rdl', 3, '8-10'], ['leg-press', 3, '10-12'], ['leg-curl', 3, '10-12'], ['standing-calf-raise', 4, '12-15'], ['hanging-leg-raise', 3, '10-12']] }
+        { name: 'Верх', items: [bb('bench-press', 4, '6-8'), bb('barbell-row', 4, '6-8'), bb('db-shoulder-press', 3, '8-10'), bb('lat-pulldown', 3, '10-12'), bb('barbell-curl', 3, '10-12'), bb('triceps-pushdown', 3, '10-12')] },
+        { name: 'Низ', items: [bb('back-squat', 4, '6-8'), bb('rdl', 3, '8-10'), bb('leg-press', 3, '10-12'), bb('leg-curl', 3, '10-12'), bb('standing-calf-raise', 4, '12-15'), bb('hanging-leg-raise', 3, '10-12')] }
       ]
     },
     {
       id: 'ppl',
+      kind: 'bodybuilding',
       name: 'Push / Pull / Legs',
       note: 'Три тренування: жими, тяги, ноги. 3–6 разів на тиждень.',
       days: [
-        { name: 'Push — жими', items: [['bench-press', 4, '6-8'], ['incline-db-press', 3, '8-10'], ['ohp', 3, '6-8'], ['lateral-raise', 3, '12-15'], ['triceps-pushdown', 3, '10-12']] },
-        { name: 'Pull — тяги', items: [['pull-up', 4, '6-10'], ['barbell-row', 3, '8-10'], ['seated-cable-row', 3, '10-12'], ['face-pull', 3, '12-15'], ['hammer-curl', 3, '10-12']] },
-        { name: 'Legs — ноги', items: [['back-squat', 4, '6-8'], ['rdl', 3, '8-10'], ['leg-press', 3, '10-12'], ['leg-curl', 3, '10-12'], ['standing-calf-raise', 4, '12-15']] }
+        { name: 'Push — жими', items: [bb('bench-press', 4, '6-8'), bb('incline-db-press', 3, '8-10'), bb('ohp', 3, '6-8'), bb('lateral-raise', 3, '12-15'), bb('triceps-pushdown', 3, '10-12')] },
+        { name: 'Pull — тяги', items: [bb('pull-up', 4, '6-10'), bb('barbell-row', 3, '8-10'), bb('seated-cable-row', 3, '10-12'), bb('face-pull', 3, '12-15'), bb('hammer-curl', 3, '10-12')] },
+        { name: 'Legs — ноги', items: [bb('back-squat', 4, '6-8'), bb('rdl', 3, '8-10'), bb('leg-press', 3, '10-12'), bb('leg-curl', 3, '10-12'), bb('standing-calf-raise', 4, '12-15')] }
+      ]
+    },
+    {
+      id: 'pl-base',
+      kind: 'powerlifting',
+      name: 'Пауерліфтинг: база',
+      note: 'Присід / жим / тяга у % від ПМ, три тренування з різним навантаженням.',
+      days: [
+        { name: 'Пн — присід важкий', items: [pw('back-squat', 'heavy', 70, 6, 4, 240), pw('bench-press', 'light', 45, 6, 3, 120), pw('skull-crusher', 'medium', 55, 6, 3, 180)] },
+        { name: 'Ср — тяга', items: [pw('deadlift', 'medium', 60, 5, 5, 180), pw('bench-press', 'light', 50, 6, 3, 120), pw('rdl', 'medium', 65, 4, 4, 180), pw('ohp', 'light', 40, 6, 3, 120)] },
+        { name: 'Пт — жим важкий', items: [pw('bench-press', 'heavy', 70, 6, 2, 240), pw('back-squat', 'light', 40, 6, 3, 120), pw('barbell-curl', 'light', 70, 6, 3, 180)] }
       ]
     }
   ];
@@ -184,6 +204,18 @@
     andrii.program = PL.buildFromPreset('ppl', andrii).program;
     andrii.nutrition = Object.assign(PL.calcNutrition(andrii), { date: PL.daysAgo(30), manual: false });
 
+    var taras = PL.normalizeProfile({
+      name: 'Тарас Бондар', phone: '+380 66 222 33 44', telegram: '@taras_pl',
+      sex: 'male', age: 28, height: 180, activity: 1.725, goal: 'maintain',
+      goals: 'Чемпіонат області: присід 200, жим 140, тяга 230',
+      notes: 'Тренування пн / ср / пт. Веде щоденник тоннажу сам.',
+      maxes: { 'back-squat': 185, 'bench-press': 130, 'deadlift': 215, 'ohp': 70, 'rdl': 150, 'barbell-curl': 50, 'skull-crusher': 60 }
+    });
+    taras.bodyWeight = weekly(91.2, 92.4, 6);
+    taras.weight = taras.bodyWeight[taras.bodyWeight.length - 1].weight;
+    taras.lifts = liftSeries('bench-press', 110, 2.5, 5, 6).concat(liftSeries('back-squat', 160, 5, 5, 5));
+    taras.program = PL.buildFromPreset('pl-base', taras).program;
+
     var maria = PL.normalizeProfile({
       name: 'Марія Шевчук', phone: '+380 93 555 12 34', instagram: '@maria.shev',
       sex: 'female', age: 31, height: 164, goal: 'maintain', activity: 1.375,
@@ -191,7 +223,10 @@
       notes: 'Перше заняття ще не проводили.'
     });
 
-    S.clients = [olena, andrii, maria];
+    andrii.maxes = { 'bench-press': 105, 'lat-pulldown': 80, 'db-shoulder-press': 30 };
+    olena.maxes = { 'hip-thrust': 80, 'rdl': 55 };
+
+    S.clients = [olena, andrii, taras, maria];
 
     S.self = PL.normalizeProfile({
       sex: 'male', age: 27, height: 178, activity: 1.375, goal: 'maintain',
