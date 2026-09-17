@@ -92,9 +92,15 @@
       if (!Array.isArray(out.program.days)) out.program.days = [];
       out.program.days.forEach(function (d) {
         if (!d.id) d.id = PL.uid();
+        if (typeof d.date !== 'string') d.date = '';
         if (!Array.isArray(d.items)) d.items = [];
         d.items.forEach(function (it) {
           if (!it.id) it.id = PL.uid();
+          if (!it.group) it.group = 'gpp';
+          if (!it.load) it.load = 'medium';
+          if (it.coef == null) it.coef = 1;
+          if (it.mult == null) it.mult = null;
+          if (typeof it.note !== 'string') it.note = '';
           if (!Array.isArray(it.blocks) || !it.blocks.length) {
             it.blocks = [{ id: PL.uid(), weight: PL.num(it.weight), pct: null, reps: it.reps, sets: it.sets, rest: null }];
           }

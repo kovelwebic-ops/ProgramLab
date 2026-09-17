@@ -172,14 +172,33 @@ img.is-missing { visibility: hidden; }
 .stats-line { color: var(--muted); white-space: nowrap; }
 .stats-line b { color: var(--fg); }
 
-.pw-item { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; margin: 8px 0; }
-.pw-item.is-excluded { background: var(--warn-weak); }
-.pw-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.pw-head .inp { width: auto; }
-.pw-head select.inp[data-i="group"] { width: 130px; }
-.pw-blocks { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; margin: 8px 0; }
-.pw-block { display: flex; align-items: center; gap: 6px; }
-.pw-item > .inp.wide { margin-top: 2px; }
+/* Таблиця пауерліфтингу: щільна сітка, як у робочому файлі тренера */
+.sheet-wrap {
+  overflow-x: auto; background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); margin-bottom: 16px;
+}
+.sheet { border-collapse: collapse; font-size: 12px; }
+.sheet th, .sheet td { border: 1px solid var(--line); padding: 2px 4px; text-align: center; white-space: nowrap; }
+.sheet thead .band th {
+  background: #21304a; color: #fff; font-weight: 600; text-align: left; padding: 5px 8px; border-color: #21304a;
+}
+.sheet thead .band th.calc { text-align: center; }
+.sheet thead .cols th { background: var(--bg); color: var(--muted); font-weight: 500; position: sticky; top: 0; }
+.sheet .slot-start { border-left: 2px solid var(--line); }
+.sheet td.slot.is-free { background: #fcfcfd; }
+.sheet td.calc { background: var(--bg); font-variant-numeric: tabular-nums; }
+.sheet td.ex-cell { text-align: left; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.sheet tr.is-excluded td { background: var(--warn-weak); }
+.sheet tr.day-total td { background: #eef1f6; font-weight: 600; }
+.sheet .day-cell { text-align: left; vertical-align: top; background: var(--bg); min-width: 150px; }
+.sheet .day-tools { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+.sheet .actions { white-space: nowrap; }
+.cell-inp { padding: 3px 4px; font-size: 12px; width: 52px; border-radius: 4px; }
+.cell-inp.md { width: 68px; }
+.cell-inp.note { width: 160px; }
+.cell-inp.day-name { width: 140px; font-weight: 600; }
+.sheet .day-cell input[type="date"] { width: 118px; }
+.sheet select.cell-inp { width: 76px; }
 
 /* Прогрес */
 .scroll-box { max-height: 280px; overflow-y: auto; }
