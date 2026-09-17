@@ -67,12 +67,12 @@
 
   PL.emptyProfile = function (name) {
     return {
-      id: PL.uid(), name: name || '', phone: '', email: '',
+      id: PL.uid(), name: name || '', phone: '', telegram: '', instagram: '',
       sex: 'male', age: null, height: null, weight: null, activity: 1.55, goal: 'maintain',
       goals: '', injuries: '', notes: '',
       exclusions: { exercises: [], muscles: [], equipment: [], joints: [] },
       program: null, nutrition: null,
-      meals: [], bodyWeight: [], lifts: [], photos: [],
+      plan: [], bodyWeight: [], lifts: [], photos: [],
       createdAt: PL.today()
     };
   };
@@ -83,7 +83,7 @@
     ['exercises', 'muscles', 'equipment', 'joints'].forEach(function (k) {
       if (!Array.isArray(out.exclusions[k])) out.exclusions[k] = [];
     });
-    ['meals', 'bodyWeight', 'lifts', 'photos'].forEach(function (k) {
+    ['plan', 'bodyWeight', 'lifts', 'photos'].forEach(function (k) {
       if (!Array.isArray(out[k])) out[k] = [];
     });
     if (out.program) {
@@ -105,6 +105,7 @@
       muscle: PL.MUSCLES[e.muscle] ? e.muscle : Object.keys(PL.MUSCLES)[0],
       equipment: PL.EQUIPMENT[e.equipment] ? e.equipment : Object.keys(PL.EQUIPMENT)[0],
       joints: Array.isArray(e.joints) ? e.joints.filter(function (j) { return !!PL.JOINTS[j]; }) : [],
+      photo: e.photo || null,
       custom: !!e.custom
     };
   };
@@ -186,6 +187,7 @@
     var close = function () {
       root.remove();
       document.removeEventListener('keydown', onKey);
+      if (o.onClose) o.onClose();
     };
     var submit = function () {
       if (!o.onOk || o.onOk(body, close) !== false) close();
@@ -268,11 +270,34 @@
     });
   };
 
+  var imgCache = {};
+
   PL.photoStore = {
-    put: function (id, dataUrl) { return tx('readwrite', function (st) { return st.put(dataUrl, id); }); },
+    put: function (id, dataUrl) {
+      imgCache[id] = dataUrl;
+      return tx('readwrite', function (st) { return st.put(dataUrl, id); });
+    },
     get: function (id) { return tx('readonly', function (st) { return st.get(id); }); },
-    del: function (id) { return tx('readwrite', function (st) { return st.delete(id); }); },
-    clear: function () { return tx('readwrite', function (st) { return st.clear(); }); }
+    del: function (id) {
+      delete imgCache[id];
+      return tx('readwrite', function (st) { return st.delete(id); });
+    },
+    clear: function () {
+      imgCache = {};
+      return tx('readwrite', function (st) { return st.clear(); });
+    }
+  };
+
+  // Підставляє знімки в <img data-img="id">; кеш потрібен, бо списки перемальовуються часто
+  PL.fillImages = function (root) {
+    PL.$$('img[data-img]', root).forEach(function (img) {
+      var id = img.dataset.img;
+      if (imgCache[id]) { img.src = imgCache[id]; return; }
+      PL.photoStore.get(id).then(function (src) {
+        if (src) { imgCache[id] = src; img.src = src; }
+        else img.classList.add('is-missing');
+      }).catch(function () { img.classList.add('is-missing'); });
+    });
   };
 
   PL.dropPhotos = function (profile) {

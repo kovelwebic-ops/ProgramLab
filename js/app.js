@@ -92,7 +92,7 @@
           '<tr><td>Вправ у базі</td><td>' + S.exercises.length + '</td></tr>' +
           '<tr><td>Замірів ваги</td><td>' + total('bodyWeight') + '</td></tr>' +
           '<tr><td>Результатів у вправах</td><td>' + total('lifts') + '</td></tr>' +
-          '<tr><td>Записів харчування</td><td>' + total('meals') + '</td></tr>' +
+          '<tr><td>Записів у раціоні</td><td>' + total('plan') + '</td></tr>' +
           '<tr><td>Фото прогресу</td><td>' + total('photos') + '</td></tr>' +
         '</tbody></table></div>' +
       '<div class="panel"><h2>Скидання</h2>' +

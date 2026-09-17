@@ -71,64 +71,87 @@
       '<div class="page-head"><h1>База вправ</h1><span class="spacer"></span>' +
         '<button class="btn primary" data-a="add">+ Додати вправу</button></div>' +
       '<div class="panel">' + filtersHtml(f) + '</div>' +
-      '<div class="panel" data-list></div>';
+      '<div data-list></div>';
 
     var list = el.querySelector('[data-list]');
 
     var paint = function () {
       var rows = PL.filterExercises(f);
       if (!rows.length) {
-        list.innerHTML = '<div class="empty">Нічого не знайдено</div>';
+        list.innerHTML = '<div class="panel empty">Нічого не знайдено</div>';
         return;
       }
       list.innerHTML =
-        '<table class="tbl"><thead><tr><th>Вправа</th><th>Група м’язів</th><th>Обладнання</th>' +
-          '<th>Навантаження на суглоби</th><th></th></tr></thead><tbody>' +
-        rows.map(function (e) {
-          return '<tr data-id="' + esc(e.id) + '">' +
-            '<td>' + esc(e.name) + (e.custom ? ' <span class="tag">своя</span>' : '') + '</td>' +
-            '<td>' + esc(PL.MUSCLES[e.muscle]) + '</td>' +
-            '<td>' + esc(PL.EQUIPMENT[e.equipment]) + '</td>' +
-            '<td class="small muted">' + (e.joints.map(function (j) { return esc(PL.JOINTS[j]); }).join(', ') || '—') + '</td>' +
-            '<td class="actions"><button class="icon-btn" data-a="edit">Змінити</button>' +
-            '<button class="icon-btn danger" data-a="del">Видалити</button></td></tr>';
-        }).join('') +
-        '</tbody></table>' +
-        '<div class="small muted" style="margin-top:10px">Показано ' + rows.length + ' з ' + PL.S.exercises.length + '</div>';
+        '<div class="ex-grid">' + rows.map(function (e) {
+          return '<button class="ex-card" data-id="' + esc(e.id) + '" title="Натисніть, щоб редагувати">' +
+            (e.photo
+              ? '<img class="ex-photo" data-img="' + esc(e.photo) + '" alt="">'
+              : '<span class="ex-photo is-empty">' + esc(PL.MUSCLES[e.muscle]) + '</span>') +
+            '<span class="ex-name">' + esc(e.name) + (e.custom ? ' <span class="tag">своя</span>' : '') + '</span>' +
+            '<span class="ex-tags">' + PL.exMeta(e) + '</span>' +
+            (e.joints.length
+              ? '<span class="ex-joints small muted">' + e.joints.map(function (j) { return esc(PL.JOINTS[j]); }).join(', ') + '</span>'
+              : '') +
+            '</button>';
+        }).join('') + '</div>' +
+        '<div class="small muted" style="margin:12px 0 0">Показано ' + rows.length + ' з ' + PL.S.exercises.length +
+          '. Натисніть картку, щоб змінити вправу або додати фото.</div>';
+      PL.fillImages(list);
     };
 
     bindFilters(el, f, paint);
 
     el.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-a]');
-      if (!b) return;
-      var tr = b.closest('tr[data-id]');
-      var ex = tr ? PL.exById(tr.dataset.id) : null;
-      if (b.dataset.a === 'add') editExercise(null, paint);
-      if (b.dataset.a === 'edit' && ex) editExercise(ex, paint);
-      if (b.dataset.a === 'del' && ex) removeExercise(ex, paint);
+      if (e.target.closest('[data-a="add"]')) { editExercise(null, paint); return; }
+      var card = e.target.closest('.ex-card');
+      if (card) editExercise(PL.exById(card.dataset.id), paint);
     });
 
     paint();
   };
 
   var editExercise = function (ex, done) {
-    var e = ex || { name: '', muscle: 'chest', equipment: 'barbell', joints: [] };
-    PL.modal({
-      title: ex ? 'Редагувати вправу' : 'Нова вправа',
+    var e = ex || { name: '', muscle: 'chest', equipment: 'barbell', joints: [], photo: null };
+    var original = e.photo || null;
+    var photo = original;
+    var uploaded = [];   // знімки цього вікна: якщо не збережемось, їх треба прибрати
+    var saved = false;
+
+    var photoHtml = function () {
+      return (photo
+        ? '<img class="ex-photo" data-img="' + esc(photo) + '" alt="">'
+        : '<span class="ex-photo is-empty">Без фото</span>') +
+        '<div class="row" style="margin-top:8px">' +
+          '<label class="btn sm">' + (photo ? 'Замінити фото' : 'Додати фото') +
+            '<input type="file" accept="image/*" data-photo-file hidden></label>' +
+          (photo ? '<button class="btn sm danger" data-a="photo-clear">Прибрати</button>' : '') +
+        '</div>';
+    };
+
+    var m = PL.modal({
+      title: ex ? 'Вправа' : 'Нова вправа',
       ok: 'Зберегти',
+      onClose: function () {
+        if (saved) return;
+        uploaded.forEach(function (id) { PL.photoStore.del(id).catch(function () {}); });
+      },
       body:
-        '<label class="field" style="margin-bottom:12px"><span>Назва</span>' +
-          '<input class="inp" data-e="name" value="' + esc(e.name) + '" autocomplete="off"></label>' +
-        '<div class="grid-2" style="margin-bottom:12px">' +
-          '<label class="field"><span>Група м’язів</span><select class="inp" data-e="muscle">' + PL.opts(PL.MUSCLES, e.muscle) + '</select></label>' +
-          '<label class="field"><span>Обладнання</span><select class="inp" data-e="equipment">' + PL.opts(PL.EQUIPMENT, e.equipment) + '</select></label>' +
+        '<div class="ex-edit">' +
+          '<div data-photo-box>' + photoHtml() + '</div>' +
+          '<div class="stack">' +
+            '<label class="field"><span>Назва</span>' +
+              '<input class="inp" data-e="name" value="' + esc(e.name) + '" autocomplete="off"></label>' +
+            '<label class="field"><span>Група м’язів</span><select class="inp" data-e="muscle">' + PL.opts(PL.MUSCLES, e.muscle) + '</select></label>' +
+            '<label class="field"><span>Обладнання</span><select class="inp" data-e="equipment">' + PL.opts(PL.EQUIPMENT, e.equipment) + '</select></label>' +
+          '</div>' +
         '</div>' +
-        '<div class="field"><span>Навантаження на суглоби — за цим працює виключення при травмах</span>' +
+        '<div class="field" style="margin-top:14px"><span>Навантаження на суглоби — за цим працює виключення при травмах</span>' +
           '<div class="chips">' + Object.keys(PL.JOINTS).map(function (k) {
             return '<label class="chip"><input type="checkbox" data-j="' + k + '"' +
               (e.joints.indexOf(k) >= 0 ? ' checked' : '') + '> ' + esc(PL.JOINTS[k]) + '</label>';
-          }).join('') + '</div></div>',
+          }).join('') + '</div></div>' +
+        (ex ? '<div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">' +
+          '<button class="btn danger sm" data-a="del-ex">Видалити вправу</button></div>' : ''),
       onOk: function (body) {
         var nameInp = body.querySelector('[data-e=name]');
         var name = nameInp.value.trim();
@@ -137,15 +160,45 @@
           name: name,
           muscle: body.querySelector('[data-e=muscle]').value,
           equipment: body.querySelector('[data-e=equipment]').value,
-          joints: PL.$$('[data-j]', body).filter(function (c) { return c.checked; }).map(function (c) { return c.dataset.j; })
+          joints: PL.$$('[data-j]', body).filter(function (c) { return c.checked; }).map(function (c) { return c.dataset.j; }),
+          photo: photo
         };
+        if (original && original !== photo) PL.photoStore.del(original).catch(function () {});
         if (ex) Object.assign(ex, data);
         else PL.S.exercises.push(Object.assign({ id: PL.uid(), custom: true }, data));
+        saved = true;
         PL.saveNow();
         done();
         PL.toast(ex ? 'Вправу оновлено' : 'Вправу додано');
       }
     });
+
+    var repaintPhoto = function () {
+      var box = m.body.querySelector('[data-photo-box]');
+      box.innerHTML = photoHtml();
+      PL.fillImages(box);
+    };
+
+    m.body.addEventListener('change', function (evt) {
+      if (!evt.target.matches('[data-photo-file]') || !evt.target.files.length) return;
+      PL.readImage(evt.target.files[0], 900, 0.8).then(function (dataUrl) {
+        var id = PL.uid();
+        return PL.photoStore.put(id, dataUrl).then(function () {
+          uploaded.push(id);
+          photo = id;
+          repaintPhoto();
+        });
+      }).catch(function () { PL.toast('Не вдалося зберегти фото'); });
+    });
+
+    m.body.addEventListener('click', function (evt) {
+      var b = evt.target.closest('[data-a]');
+      if (!b) return;
+      if (b.dataset.a === 'photo-clear') { photo = null; repaintPhoto(); }
+      if (b.dataset.a === 'del-ex') { m.close(); removeExercise(ex, done); }
+    });
+
+    PL.fillImages(m.body);
   };
 
   var usageCount = function (id) {
@@ -167,6 +220,7 @@
         PL.plural(n, 'запис', 'записи', 'записів') + '). Там вона залишиться позначеною як видалена.' : '',
       'Видалити',
       function () {
+        if (ex.photo) PL.photoStore.del(ex.photo).catch(function () {});
         PL.S.exercises = PL.S.exercises.filter(function (e) { return e.id !== ex.id; });
         PL.saveNow();
         done();
@@ -201,6 +255,9 @@
       list.innerHTML = (rows.length
         ? '<table class="tbl"><tbody>' + rows.map(function (r) {
             return '<tr data-id="' + esc(r.e.id) + '" class="' + (r.why ? 'is-excluded' : 'click') + '">' +
+              '<td style="width:52px">' + (r.e.photo
+                ? '<img class="ex-thumb" data-img="' + esc(r.e.photo) + '" alt="">'
+                : '<span class="ex-thumb is-empty"></span>') + '</td>' +
               '<td>' + esc(r.e.name) + (r.why ? ' <span class="tag warn">' + esc(r.why) + '</span>' : '') + '</td>' +
               '<td>' + PL.exMeta(r.e) + '</td>' +
               '<td class="actions"><button class="btn sm" data-a="pick">Додати</button></td></tr>';
@@ -209,6 +266,7 @@
         (hidden && !showExcluded
           ? '<div class="small muted" style="margin-top:10px">Приховано через обмеження профілю: ' + hidden + '</div>'
           : '');
+      PL.fillImages(list);
     };
 
     bindFilters(m.body, f, paint);

@@ -148,7 +148,7 @@
     PL.S = S; // пресети й демо-записи читають базу вправ із PL.S
 
     var olena = PL.normalizeProfile({
-      name: 'Олена Коваленко', phone: '+380 67 123 45 67', email: 'olena.k@example.com',
+      name: 'Олена Коваленко', phone: '+380 67 123 45 67', telegram: '@olena_k', instagram: '@olena.fit',
       sex: 'female', age: 29, height: 168, activity: 1.55, goal: 'lose',
       goals: 'Мінус 5 кг до літа, підтягнути сідниці та ноги',
       injuries: 'Хондромаляція надколінка: біль у колінах на глибоких присіданнях і випадах',
@@ -162,14 +162,16 @@
     olena.program.days[0].items.push(PL.programItem(PL.exById('hip-thrust'), 4, '10-12'));
     olena.program.days[1].items.push(PL.programItem(PL.exById('leg-curl'), 3, '12-15'));
     olena.nutrition = Object.assign(PL.calcNutrition(olena), { date: PL.daysAgo(14), manual: false });
-    olena.meals = [
-      { id: PL.uid(), date: PL.today(), name: 'Сніданок: вівсянка з бананом і горіхами', kcal: 450, protein: 14, fat: 15, carbs: 64 },
-      { id: PL.uid(), date: PL.today(), name: 'Обід: курка з рисом і овочами', kcal: 580, protein: 42, fat: 14, carbs: 68 },
-      { id: PL.uid(), date: PL.daysAgo(1), name: 'Сніданок: сирники', kcal: 520, protein: 32, fat: 18, carbs: 50 }
+    olena.plan = [
+      { id: PL.uid(), day: 0, name: 'Сніданок: вівсянка з бананом і горіхами', kcal: 450, protein: 14, fat: 15, carbs: 64 },
+      { id: PL.uid(), day: 0, name: 'Обід: курка з рисом і овочами', kcal: 580, protein: 42, fat: 14, carbs: 68 },
+      { id: PL.uid(), day: 0, name: 'Вечеря: сир з ягодами', kcal: 320, protein: 36, fat: 8, carbs: 24 },
+      { id: PL.uid(), day: 1, name: 'Сніданок: омлет з овочами', kcal: 380, protein: 26, fat: 22, carbs: 14 },
+      { id: PL.uid(), day: 1, name: 'Обід: індичка з гречкою', kcal: 610, protein: 45, fat: 16, carbs: 66 }
     ];
 
     var andrii = PL.normalizeProfile({
-      name: 'Андрій Мельник', phone: '+380 50 987 65 43', email: 'andrii.m@example.com',
+      name: 'Андрій Мельник', phone: '+380 50 987 65 43', telegram: '@andrii_m',
       sex: 'male', age: 34, height: 182, activity: 1.55, goal: 'gain',
       goals: 'Набрати 4–5 кг мʼязів, жим лежачи 100 кг на 5 разів',
       injuries: 'Протрузія L5–S1: без осьового навантаження на хребет',
@@ -183,7 +185,7 @@
     andrii.nutrition = Object.assign(PL.calcNutrition(andrii), { date: PL.daysAgo(30), manual: false });
 
     var maria = PL.normalizeProfile({
-      name: 'Марія Шевчук', phone: '+380 93 555 12 34',
+      name: 'Марія Шевчук', phone: '+380 93 555 12 34', instagram: '@maria.shev',
       sex: 'female', age: 31, height: 164, goal: 'maintain', activity: 1.375,
       goals: 'Повернутись у форму після пологів',
       notes: 'Перше заняття ще не проводили.'

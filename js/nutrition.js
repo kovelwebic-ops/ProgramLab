@@ -1,4 +1,4 @@
-/* Калькулятор раціону: денна норма (Міффлін — Сан-Жеор) і щоденник прийомів їжі */
+/* Раціон: денна норма (Міффлін — Сан-Жеор) і план харчування на тиждень */
 (function () {
   'use strict';
 
@@ -22,8 +22,23 @@
 
   var MACROS = [['kcal', 'Калорії', 'ккал'], ['protein', 'Білки', 'г'], ['fat', 'Жири', 'г'], ['carbs', 'Вуглеводи', 'г']];
 
+  var DAYS = [
+    ['Пн', 'Понеділок'], ['Вт', 'Вівторок'], ['Ср', 'Середа'], ['Чт', 'Четвер'],
+    ['Пт', 'Пʼятниця'], ['Сб', 'Субота'], ['Нд', 'Неділя']
+  ];
+
   PL.views.nutrition = function (el, p) {
-    var date = PL.today();
+    var day = 0;
+
+    // Тренеру важливо бачити не тільки грами, а й скільки це на кілограм ваги клієнта
+    var perKg = function (grams) {
+      if (!p.weight || grams == null) return '';
+      return ' <span class="small muted">(' + PL.fmt(grams / p.weight, 2) + ' г/кг)</span>';
+    };
+    var kcalPerKg = function (kcal) {
+      if (!p.weight || kcal == null) return '';
+      return ' <span class="small muted">(' + PL.fmt(kcal / p.weight, 1) + ' ккал/кг)</span>';
+    };
 
     el.innerHTML =
       '<div class="two">' +
@@ -40,17 +55,19 @@
         '</div>' +
         '<div class="panel" data-target></div>' +
       '</div>' +
-      '<div class="panel" data-diary></div>';
+      '<div class="panel" data-week></div>';
 
     var $preview = el.querySelector('[data-preview]');
     var $target = el.querySelector('[data-target]');
-    var $diary = el.querySelector('[data-diary]');
+    var $week = el.querySelector('[data-week]');
 
     var paintPreview = function () {
       var r = PL.calcNutrition(p);
       $preview.innerHTML = r
         ? '<div class="small muted">Базовий обмін ' + PL.fmt(r.bmr, 0) + ' ккал · з активністю ' + PL.fmt(r.tdee, 0) + ' ккал</div>' +
-          '<div style="margin:8px 0 12px"><b>' + PL.fmt(r.kcal, 0) + ' ккал</b> · Б ' + r.protein + ' г · Ж ' + r.fat + ' г · В ' + r.carbs + ' г</div>' +
+          '<div style="margin:8px 0 4px"><b>' + PL.fmt(r.kcal, 0) + ' ккал</b>' + kcalPerKg(r.kcal) + '</div>' +
+          '<div style="margin-bottom:12px">Б ' + r.protein + ' г' + perKg(r.protein) +
+            ' · Ж ' + r.fat + ' г' + perKg(r.fat) + ' · В ' + r.carbs + ' г' + perKg(r.carbs) + '</div>' +
           '<button class="btn primary" data-a="apply">Встановити як денну норму</button>'
         : '<div class="small muted">Заповніть вік, зріст і вагу — і норма розрахується.</div>';
     };
@@ -62,42 +79,68 @@
             return '<label class="field"><span>' + m[1] + ', ' + m[2] + '</span>' +
               '<input class="inp" data-t="' + m[0] + '" value="' + esc(t[m[0]] == null ? '' : t[m[0]]) + '" autocomplete="off"></label>';
           }).join('') + '</div>' +
-          '<div class="small muted" style="margin-top:12px">' + (t.manual ? 'Змінено вручну' : 'Розраховано') + ' ' + PL.fmtDate(t.date) + '. Значення можна підправити руками.</div>' +
+          '<div style="margin-top:12px">' +
+            'На кілограм ваги: <b>' + (p.weight ? PL.fmt(PL.num(t.kcal) / p.weight, 1) + ' ккал' : '—') + '</b>' +
+            (p.weight
+              ? ' · Б ' + PL.fmt(PL.num(t.protein) / p.weight, 2) + ' · Ж ' + PL.fmt(PL.num(t.fat) / p.weight, 2) +
+                ' · В ' + PL.fmt(PL.num(t.carbs) / p.weight, 2) + ' <span class="small muted">г/кг</span>'
+              : ' <span class="small muted">— вкажіть вагу</span>') +
+          '</div>' +
+          '<div class="small muted" style="margin-top:10px">' + (t.manual ? 'Змінено вручну' : 'Розраховано') + ' ' + PL.fmtDate(t.date) + '. Значення можна підправити руками.</div>' +
           '<button class="btn danger sm" data-a="clear-target" style="margin-top:12px">Скинути норму</button>'
-        : '<p class="muted">Норму ще не встановлено. Розрахуйте її в блоці ліворуч або впишіть значення після розрахунку.</p>');
+        : '<p class="muted">Норму ще не встановлено. Розрахуйте її в блоці ліворуч.</p>');
     };
 
-    var paintDiary = function () {
-      var meals = p.meals.filter(function (m) { return m.date === date; });
+    var dayMeals = function (i) {
+      return p.plan.filter(function (m) { return m.day === i; });
+    };
+
+    var sumDay = function (i, key) {
+      return dayMeals(i).reduce(function (s, m) { return s + (PL.num(m[key]) || 0); }, 0);
+    };
+
+    var paintWeek = function () {
       var t = p.nutrition;
-      var sum = function (k) {
-        return meals.reduce(function (s, m) { return s + (PL.num(m[k]) || 0); }, 0);
-      };
+      var meals = dayMeals(day);
+
+      var tabs = DAYS.map(function (d, i) {
+        var kcal = sumDay(i, 'kcal');
+        var goal = t ? PL.num(t.kcal) : null;
+        var diff = goal ? kcal - goal : null;
+        return '<button class="day-tab' + (i === day ? ' on' : '') + '" data-day="' + i + '">' +
+          '<b>' + d[0] + '</b>' +
+          '<span>' + (kcal ? PL.fmt(kcal, 0) + ' ккал' : '—') + '</span>' +
+          (diff != null && kcal
+            ? '<span class="' + (Math.abs(diff) / goal > 0.1 ? 'off' : 'ok') + '">' + (diff > 0 ? '+' : '') + PL.fmt(diff, 0) + '</span>'
+            : '<span>&nbsp;</span>') +
+          '</button>';
+      }).join('');
 
       var stat = function (key, label, unit) {
-        var v = sum(key);
+        var v = sumDay(day, key);
         var goal = t ? PL.num(t[key]) : null;
         var left = goal ? goal - v : null;
         return '<div class="stat"><span>' + label + '</span>' +
           '<b>' + PL.fmt(v, 0) + (goal ? ' <span class="small muted">/ ' + PL.fmt(goal, 0) + ' ' + unit + '</span>' : ' <span class="small muted">' + unit + '</span>') + '</b>' +
           (goal
-            ? '<div class="bar"><i class="' + (v > goal ? 'over' : '') + '" style="width:' + Math.min(100, goal ? v / goal * 100 : 0).toFixed(1) + '%"></i></div>' +
+            ? '<div class="bar"><i class="' + (v > goal ? 'over' : '') + '" style="width:' + Math.min(100, v / goal * 100).toFixed(1) + '%"></i></div>' +
               '<span>' + (left >= 0 ? 'Залишилось ' + PL.fmt(left, 0) : 'Перебір ' + PL.fmt(-left, 0)) + ' ' + unit + '</span>'
             : '') +
           '</div>';
       };
 
-      $diary.innerHTML =
-        '<div class="row" style="margin-bottom:16px"><h2 style="margin:0">Щоденник харчування</h2><span class="spacer"></span>' +
-          '<button class="btn sm" data-a="prev" title="Попередній день">←</button>' +
-          '<input type="date" class="inp" data-date value="' + esc(date) + '">' +
-          '<button class="btn sm" data-a="next" title="Наступний день">→</button>' +
-          (date !== PL.today() ? '<button class="btn sm" data-a="today">Сьогодні</button>' : '') +
+      $week.innerHTML =
+        '<div class="row" style="margin-bottom:14px"><h2 style="margin:0">Раціон на тиждень</h2>' +
+          '<span class="small muted">Приймання їжі вписуються вручну — облік по факту зручніше вести у FatSecret</span></div>' +
+        '<div class="day-tabs">' + tabs + '</div>' +
+        '<div class="row" style="margin:16px 0 14px"><h3 style="margin:0">' + DAYS[day][1] + '</h3><span class="spacer"></span>' +
+          (meals.length
+            ? '<button class="btn sm" data-a="copy-all">Скопіювати на всі дні</button>' +
+              '<button class="btn sm danger" data-a="clear-day">Очистити день</button>'
+            : '') +
         '</div>' +
-        '<div class="stats" style="margin-bottom:18px">' +
-          MACROS.map(function (m) { return stat(m[0], m[1], m[2]); }).join('') +
-        '</div>' +
-        '<table class="tbl"><thead><tr><th>Прийом їжі</th><th style="width:100px">Ккал</th>' +
+        '<div class="stats" style="margin-bottom:18px">' + MACROS.map(function (m) { return stat(m[0], m[1], m[2]); }).join('') + '</div>' +
+        '<table class="tbl"><thead><tr><th>Приймання їжі</th><th style="width:100px">Ккал</th>' +
           '<th style="width:90px">Б, г</th><th style="width:90px">Ж, г</th><th style="width:90px">В, г</th><th style="width:40px"></th></tr></thead><tbody>' +
         meals.map(function (m) {
           return '<tr data-meal="' + esc(m.id) + '"><td>' + esc(m.name) + '</td>' +
@@ -111,27 +154,27 @@
           '<td><input class="inp wide" data-mf="protein" autocomplete="off"></td>' +
           '<td><input class="inp wide" data-mf="fat" autocomplete="off"></td>' +
           '<td><input class="inp wide" data-mf="carbs" autocomplete="off"></td>' +
-          '<td><button class="btn primary sm" data-a="meal-add" title="Додати запис">+</button></td>' +
+          '<td><button class="btn primary sm" data-a="meal-add" title="Додати">+</button></td>' +
         '</tr></tbody></table>' +
-        (meals.length ? '' : '<div class="small muted" style="margin-top:10px">За цей день записів ще немає. Калорії та БЖУ вписуються вручну — бази продуктів у MVP немає.</div>');
+        (meals.length ? '' : '<div class="small muted" style="margin-top:10px">На цей день нічого не заплановано.</div>');
     };
 
     var addMeal = function () {
-      var field = function (k) { return $diary.querySelector('[data-mf="' + k + '"]'); };
+      var field = function (k) { return $week.querySelector('[data-mf="' + k + '"]'); };
       var name = field('name').value.trim();
       if (!name) {
-        PL.toast('Вкажіть назву прийому їжі');
+        PL.toast('Вкажіть назву приймання їжі');
         field('name').focus();
         return;
       }
-      p.meals.push({
-        id: PL.uid(), date: date, name: name,
+      p.plan.push({
+        id: PL.uid(), day: day, name: name,
         kcal: PL.num(field('kcal').value), protein: PL.num(field('protein').value),
         fat: PL.num(field('fat').value), carbs: PL.num(field('carbs').value)
       });
       PL.save();
-      paintDiary();
-      $diary.querySelector('[data-mf="name"]').focus();
+      paintWeek();
+      $week.querySelector('[data-mf="name"]').focus();
     };
 
     el.addEventListener('input', function (e) {
@@ -141,19 +184,13 @@
         p[k] = (k === 'sex' || k === 'goal') ? t.value : (k === 'activity' ? parseFloat(t.value) : PL.num(t.value));
         PL.save();
         paintPreview();
+        if (k === 'weight') { paintTarget(); }
       } else if (t.dataset.t && p.nutrition) {
         p.nutrition[t.dataset.t] = PL.num(t.value);
         p.nutrition.manual = true;
         p.nutrition.date = PL.today();
         PL.save();
-        paintDiary();
-      }
-    });
-
-    el.addEventListener('change', function (e) {
-      if (e.target.matches('[data-date]')) {
-        date = e.target.value || PL.today();
-        paintDiary();
+        paintWeek();
       }
     });
 
@@ -162,6 +199,9 @@
     });
 
     el.addEventListener('click', function (e) {
+      var tab = e.target.closest('[data-day]');
+      if (tab) { day = Number(tab.dataset.day); paintWeek(); return; }
+
       var b = e.target.closest('[data-a]');
       if (!b) return;
       var a = b.dataset.a;
@@ -170,28 +210,40 @@
         var r = PL.calcNutrition(p);
         if (!r) return;
         p.nutrition = Object.assign(r, { date: PL.today(), manual: false });
-        PL.save(); paintTarget(); paintDiary();
+        PL.save(); paintTarget(); paintWeek();
         PL.toast('Денну норму встановлено');
       } else if (a === 'clear-target') {
         p.nutrition = null;
-        PL.save(); paintTarget(); paintDiary();
-      } else if (a === 'prev' || a === 'next') {
-        date = PL.shiftDate(date, a === 'prev' ? -1 : 1);
-        paintDiary();
-      } else if (a === 'today') {
-        date = PL.today();
-        paintDiary();
-      } else if (a === 'meal-del') {
-        var id = b.closest('[data-meal]').dataset.meal;
-        p.meals = p.meals.filter(function (m) { return m.id !== id; });
-        PL.save(); paintDiary();
+        PL.save(); paintTarget(); paintWeek();
       } else if (a === 'meal-add') {
         addMeal();
+      } else if (a === 'meal-del') {
+        var id = b.closest('[data-meal]').dataset.meal;
+        p.plan = p.plan.filter(function (m) { return m.id !== id; });
+        PL.save(); paintWeek();
+      } else if (a === 'clear-day') {
+        PL.confirm('Очистити ' + DAYS[day][1].toLowerCase() + '?', '', 'Очистити', function () {
+          p.plan = p.plan.filter(function (m) { return m.day !== day; });
+          PL.save(); paintWeek();
+        });
+      } else if (a === 'copy-all') {
+        PL.confirm('Скопіювати цей день на всі?', 'Заплановане на інші дні тижня буде замінено.', 'Скопіювати', function () {
+          var source = dayMeals(day);
+          p.plan = source.slice();
+          DAYS.forEach(function (d, i) {
+            if (i === day) return;
+            source.forEach(function (m) {
+              p.plan.push(Object.assign({}, m, { id: PL.uid(), day: i }));
+            });
+          });
+          PL.save(); paintWeek();
+          PL.toast('Раціон скопійовано на тиждень');
+        });
       }
     });
 
     paintPreview();
     paintTarget();
-    paintDiary();
+    paintWeek();
   };
 })();

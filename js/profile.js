@@ -17,7 +17,8 @@
           '<label class="field"><span>Імʼя</span><input class="inp" data-pf="name" value="' + val(p.name) + '" autocomplete="off" placeholder="' + (o.trainer ? 'Імʼя та прізвище' : 'Як до вас звертатись') + '"></label>' +
           (o.trainer
             ? '<label class="field"><span>Телефон</span><input class="inp" data-pf="phone" value="' + val(p.phone) + '" autocomplete="off"></label>' +
-              '<label class="field"><span>Email</span><input class="inp" data-pf="email" value="' + val(p.email) + '" autocomplete="off"></label>'
+              '<label class="field"><span>Telegram</span><input class="inp" data-pf="telegram" value="' + val(p.telegram) + '" autocomplete="off" placeholder="@username"></label>' +
+              '<label class="field"><span>Instagram</span><input class="inp" data-pf="instagram" value="' + val(p.instagram) + '" autocomplete="off" placeholder="@username"></label>'
             : '') +
         '</div></div>' +
 

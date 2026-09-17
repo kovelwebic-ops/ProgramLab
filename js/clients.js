@@ -18,7 +18,6 @@
     c.bodyWeight.forEach(function (r) { dates.push(r.date); });
     c.lifts.forEach(function (r) { dates.push(r.date); });
     c.photos.forEach(function (r) { dates.push(r.date); });
-    c.meals.forEach(function (r) { dates.push(r.date); });
     return dates.length ? dates.sort()[dates.length - 1] : null;
   };
 
@@ -35,7 +34,7 @@
     el.innerHTML =
       '<div class="page-head"><h1>Клієнти</h1><span class="spacer"></span>' +
         '<button class="btn primary" data-a="new">+ Новий клієнт</button></div>' +
-      '<div class="panel"><input class="inp wide" data-q placeholder="Пошук за імʼям, телефоном або email" autocomplete="off"></div>' +
+      '<div class="panel"><input class="inp wide" data-q placeholder="Пошук за імʼям, телефоном, Telegram чи Instagram" autocomplete="off"></div>' +
       '<div class="panel" data-list></div>';
 
     var list = el.querySelector('[data-list]');
@@ -43,7 +42,7 @@
     var paint = function () {
       var rows = PL.S.clients.filter(function (c) {
         if (!q) return true;
-        return [c.name, c.phone, c.email].join(' ').toLowerCase().indexOf(q) >= 0;
+        return [c.name, c.phone, c.telegram, c.instagram].join(' ').toLowerCase().indexOf(q) >= 0;
       }).sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'uk'); });
 
       if (!rows.length) {
@@ -61,7 +60,7 @@
             '<td><b>' + esc(c.name || 'Без імені') + '</b>' +
               (c.injuries ? '<div class="small muted">⚠ ' + esc(shorten(c.injuries, 60)) + '</div>' : '') + '</td>' +
             '<td>' + esc(PL.GOALS[c.goal] || '—') + '</td>' +
-            '<td class="small muted">' + (esc(c.phone) || '—') + (c.email ? '<br>' + esc(c.email) : '') + '</td>' +
+            '<td class="small muted">' + ([c.phone, c.telegram, c.instagram].filter(Boolean).map(esc).join('<br>') || '—') + '</td>' +
             '<td class="small">' + (c.program ? esc(c.program.name) + ' <span class="muted">· ' + c.program.days.length + ' ' +
               PL.plural(c.program.days.length, 'день', 'дні', 'днів') + '</span>' : '<span class="muted">не призначена</span>') + '</td>' +
             '<td>' + (c.weight ? PL.fmt(c.weight) + ' кг' : '—') + '</td>' +
